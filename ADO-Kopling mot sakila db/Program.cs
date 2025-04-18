@@ -48,6 +48,8 @@ namespace ADO_Kopling_mot_sakila_db
                         }
                     }
                 }
+
+                connection.Close();
             }
         }
     }        
