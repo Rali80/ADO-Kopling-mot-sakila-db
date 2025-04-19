@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-using System.Reflection.PortableExecutable;
 
 namespace ADO_Kopling_mot_sakila_db
 {
@@ -7,50 +6,60 @@ namespace ADO_Kopling_mot_sakila_db
     {
         static void Main(string[] args)
         {
-            string connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Sakila;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False;";
+            string connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Sakila;Integrated Security=True;";
+
             while (true)
             {
-                Console.Write("Ange skådespelarnamn (eller skriv 'avsluta' för att avsluta): ");
-                string actorName = Console.ReadLine();
+                Console.Write("Ange skådespelarens förnamn (eller skriv 'avsluta' för att avsluta): ");
+                string firstName = Console.ReadLine();
 
-                if (actorName.ToLower() == "avsluta")
+                if (firstName.ToLower() == "avsluta")
                 {
                     Console.WriteLine("Programmet avslutas. Tack!");
                     break;
                 }
 
-                SqlConnection connection = new SqlConnection(connectionString);
+                Console.Write("Ange skådespelarens efternamn: ");
+                string lastName = Console.ReadLine();
 
-                connection.Open();
-
-                string sql = @"SELECT title from film
-            inner join  film_actor  on  film_actor.film_id= film.film_id
-            inner join actor on actor.actor_id= film_actor.actor_id
-            where actor.first_name = @ActorName";
-
-                using (SqlCommand command = new SqlCommand(sql, connection))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    command.Parameters.AddWithValue("@ActorName", actorName);
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        Console.WriteLine("\nFilmer med " + actorName + ":");
+                    connection.Open();
 
-                        if (!reader.HasRows)
+                    string sql = @"
+                        SELECT title 
+                        FROM film
+                        INNER JOIN film_actor ON film.film_id = film_actor.film_id
+                        INNER JOIN actor ON actor.actor_id = film_actor.actor_id
+                        WHERE actor.first_name = @FirstName AND actor.last_name = @LastName";
+
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@FirstName", firstName);
+                        command.Parameters.AddWithValue("@LastName", lastName);
+
+                        using (SqlDataReader reader = command.ExecuteReader())
                         {
-                            Console.WriteLine("Inga filmer hittades för denna skådespelare.");
-                        }
-                        else
-                        {
-                            while (reader.Read())
+                            Console.WriteLine($"\nFilmer med {firstName} {lastName}:");
+
+                            if (!reader.HasRows)
                             {
-                                Console.WriteLine("- " + reader["Title"]);
+                                Console.WriteLine("Inga filmer hittades för denna skådespelare.");
+                            }
+                            else
+                            {
+                                while (reader.Read())
+                                {
+                                    Console.WriteLine("- " + reader["title"]);
+                                }
                             }
                         }
                     }
-                }
 
-                connection.Close();
+                    connection.Close();
+                }
             }
         }
-    }        
- }             
+    }
+}
+
